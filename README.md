@@ -19,10 +19,10 @@ There are a number of similar applications, but most of them do not whitelist of
 2. ```pip install -r requirements.txt```
 3. Configuration options:
     * Domain whitelist regex
-        * Defaults to Amazon's S3: ```s3\.amazonaws\.com$```
+        * Defaults to Amazon's S3: ```.*s3\.amazonaws\.com$```
         * Set: ```export JSONPROXY_DOMAIN_WL_REGEX='<REGEX>'```
     * Path whitelist regex
-        * Defaults to anything: ```.```
+        * Defaults to anything: ```.*```
         * Set: ```export JSONPROXY_PATH_WL_REGEX='<REGEX>'```
     * Cache time (in minutes)
         * Defaults to 1 minute: ```1```
@@ -38,10 +38,10 @@ For Heroku.
 1. Create Heroku app with whatever name you want: ```heroku apps:create <APP_NAME>```
 3. Configuration options:
     * Domain whitelist regex
-        * Defaults to Amazon's S3: ```s3\.amazonaws\.com$```
+        * Defaults to Amazon's S3: ```.*s3\.amazonaws\.com$```
         * Set: ```heroku config:set JSONPROXY_DOMAIN_WL_REGEX='<REGEX>'```
     * Path whitelist regex
-        * Defaults to anything: ```.```
+        * Defaults to anything: ```.*```
         * Set: ```heroku config:set JSONPROXY_PATH_WL_REGEX='<REGEX>'```
     * Cache time (in minutes)
         * Defaults to 1 minute: ```1```
@@ -49,3 +49,10 @@ For Heroku.
 1. Push up code: ```git push heroku master```
 1. You can open the app with ```heroku open```
 1. Use in your application by making a request like the following.  Make sure to encode the proxy url parameter. ```http://<APP_NAME>.herokuapp.com/proxy?callback=<CALLBACK_NAME>&url=https%3A//http://jsonip.com/```
+
+## MinnPost example
+
+For our use, we only need access to S3 and a specific bucket that we use for projects, so we set the following:
+
+* ```export JSONPROXY_DOMAIN_WL_REGEX='.*s3\.amazonaws\.com$'```
+* ```export JSONPROXY_PATH_WL_REGEX='^\/data\.minnpost'```

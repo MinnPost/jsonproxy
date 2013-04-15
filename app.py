@@ -12,15 +12,15 @@ from flask.ext.cache import Cache
 debug_app = 'DEBUG_APP' in os.environ
 
 # Domain regex
-domain_regex = 's3\.amazonaws\.com$'
+domain_regex = '.*s3\.amazonaws\.com$'
 if 'JSONPROXY_DOMAIN_WL_REGEX' in os.environ:
-  domain_regex = int(os.environ['JSONPROXY_DOMAIN_WL_REGEX'])
+  domain_regex = os.environ['JSONPROXY_DOMAIN_WL_REGEX']
 domain_regex = re.compile(domain_regex, re.I)
 
 # Path regex
-path_regex = '.'
+path_regex = '.*'
 if 'JSONPROXY_PATH_WL_REGEX' in os.environ:
-  path_regex = int(os.environ['JSONPROXY_PATH_WL_REGEX'])
+  path_regex = os.environ['JSONPROXY_PATH_WL_REGEX']
 path_regex = re.compile(path_regex, re.I)
 
 # Cache time (in minutes)
@@ -102,44 +102,19 @@ def make_proxy(url):
   }
 
 
-# Convert call to json request and get callback
-def convert_jsonp_to_json(url_parsed):
-  # Parses query string into list of tuples
-  query_parsed = urlparse.parse_qsl(url_parsed.query)
-
-  # Get callback if there is one
-  callback = False
-  for i, v in enumerate(query_parsed):
-    if query_parsed[i][0] == 'callback':
-      callback = query_parsed[i][1]
-      del query_parsed[i]
-  
-  # Convert jsonp request to json
-  jsonp_found = False
-  
-  for k in jsonp_to_json_keys:
-    for i, v in enumerate(query_parsed):
-      if query_parsed[i][0] == 'alt' and query_parsed[i][1] == k:
-        query_parsed[i] = ('alt', jsonp_to_json_keys[k])
-        jsonp_found = True
-  
-  # If no callback and jsonp, set default
-  if jsonp_found and not callback:
-    callback = default_google_callback
-  
-  # Recreate the query string by making new tuple.
-  # Note that we are reseting the fragment
-  # and any the other probably unnecessary parts.
-  new_url_tuple = url_parsed[0:4] + (urllib.urlencode(query_parsed),) + ('',)
-  
-  return urlparse.urlunparse(new_url_tuple), callback
-
-
 # Check if valid key is in url
 def is_valid_url(url_parsed):
   # Make sure the the domain and path pass the
   # check.
   found = True
+  
+  if app.debug:
+    print 'Domain: %s' % url_parsed.netloc
+    print 'Domain regex: %s' % domain_regex.pattern
+    print 'Domain not match: %s' % (domain_regex.match(url_parsed.netloc) is None)
+    print 'Path: %s' % url_parsed.path
+    print 'Path regex: %s' % path_regex.pattern
+    print 'Path not match: %s' % (path_regex.match(url_parsed.path) is None)
   
   # Check domain
   domain_match = domain_regex.match(url_parsed.netloc)
