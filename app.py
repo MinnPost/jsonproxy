@@ -27,8 +27,8 @@ path_regex = re.compile(path_regex, re.I)
 proxy_cache = 1
 if 'JSONPROXY_CACHE' in os.environ:
   proxy_cache = int(os.environ['JSONPROXY_CACHE'])
-  
-  
+
+
 # Other application wide variables
 jsonp_header_overrides = {
   'content-type': 'text/javascript; charset=UTF-8',
@@ -57,7 +57,7 @@ cache.init_app(app, config = cache_config)
 @cache.cached(timeout = 500)
 def index():
   return 'This is a whitelisted JSON to JSONP proxy.'
-    
+
 
 # Proxy route
 @app.route('/proxy')
@@ -65,7 +65,7 @@ def handle_proxy():
   request_url = request.args.get('url', '')
   callback = request.args.get('callback', '')
   request_parsed = urlparse.urlparse(request_url)
-  
+
   # Check to make sure we have the right sort of request
   if not request_url or not callback:
     abort(404)
@@ -73,18 +73,23 @@ def handle_proxy():
   # Check if valid proxy url
   if not is_valid_url(request_parsed):
     abort(404)
-  
+
   # Get value from proxied url (this is the cached part)
   proxy_request = make_proxy(request_url)
   if proxy_request['status_code'] != requests.codes.ok:
     abort(proxy_request['status_code'])
-  
+
   # Wrap callback
   proxy_request['text'] = '%s(%s);' % (callback, proxy_request['text'])
-  
+
   # Override some headers
   proxy_request['headers'] = dict(proxy_request['headers'].items() + jsonp_header_overrides.items())
-  
+
+  # Remove some that may cause issues
+  del proxy_request['headers']['content-length']
+  del proxy_request['headers']['content-encoding']
+
+  # Return our response
   return Response(proxy_request['text'], proxy_request['status_code'], proxy_request['headers'])
 
 
@@ -107,7 +112,7 @@ def is_valid_url(url_parsed):
   # Make sure the the domain and path pass the
   # check.
   found = True
-  
+
   if app.debug:
     print 'Domain: %s' % url_parsed.netloc
     print 'Domain regex: %s' % domain_regex.pattern
@@ -115,12 +120,12 @@ def is_valid_url(url_parsed):
     print 'Path: %s' % url_parsed.path
     print 'Path regex: %s' % path_regex.pattern
     print 'Path not match: %s' % (path_regex.match(url_parsed.path) is None)
-  
+
   # Check domain
   domain_match = domain_regex.match(url_parsed.netloc)
   if domain_match is None:
     found = False
-  
+
   # Check path
   if found:
     path_match = path_regex.match(url_parsed.path)
