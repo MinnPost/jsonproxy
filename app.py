@@ -86,8 +86,10 @@ def handle_proxy():
   proxy_request['headers'] = dict(proxy_request['headers'].items() + jsonp_header_overrides.items())
 
   # Remove some that may cause issues
-  del proxy_request['headers']['content-length']
-  del proxy_request['headers']['content-encoding']
+  if 'content-length' in proxy_request['headers']:
+    del proxy_request['headers']['content-length']
+  if 'content-encoding' in proxy_request['headers']:
+    del proxy_request['headers']['content-encoding']
 
   # Return our response
   return Response(proxy_request['text'], proxy_request['status_code'], proxy_request['headers'])
